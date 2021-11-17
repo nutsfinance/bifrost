@@ -79,7 +79,7 @@ benchmarks! {
 		let contribution = T::MinContribution::get();
 		contribute_fund::<T>(&caller,fund_index);
 		assert_ok!(Salp::<T>::fund_success(RawOrigin::Root.into(), fund_index));
-		assert_ok!(Salp::<T>::unlock(RawOrigin::Root.into(), caller.clone(), fund_index));
+		// assert_ok!(Salp::<T>::unlock(RawOrigin::Root.into(), caller.clone(), fund_index));
 		assert_ok!(Salp::<T>::fund_retire(RawOrigin::Root.into(), fund_index));
 		assert_ok!(Salp::<T>::withdraw(RawOrigin::Root.into(), fund_index));
 		assert_eq!(Salp::<T>::redeem_pool(), T::MinContribution::get());
