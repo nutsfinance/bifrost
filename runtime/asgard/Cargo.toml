@@ -213,6 +213,7 @@ std = [
 
 runtime-benchmarks = [
 	"frame-benchmarking",
+	"orml-benchmarking",
 	"frame-system-benchmarking",
 	"frame-support/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
@@ -221,7 +222,7 @@ runtime-benchmarks = [
 	"xcm-builder/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-bounties/runtime-benchmarks",
-	"pallet-collective/runtime-benchmarks",
+	"pallet-membership/runtime-benchmarks",
 	"pallet-indices/runtime-benchmarks",
 	"pallet-scheduler/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
@@ -230,6 +231,8 @@ runtime-benchmarks = [
 	"pallet-vesting/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"pallet-society/runtime-benchmarks",
+	"pallet-collator-selection/runtime-benchmarks",
+	"pallet-democracy/runtime-benchmarks",
 	"bifrost-salp/runtime-benchmarks",
 	"bifrost-salp-lite/runtime-benchmarks",
 	"bifrost-bancor/runtime-benchmarks",
@@ -240,7 +243,7 @@ runtime-benchmarks = [
 	"bifrost-token-issuer/runtime-benchmarks",
 	"bifrost-lightening-redeem/runtime-benchmarks",
 	"bifrost-call-switchgear/runtime-benchmarks",
-	"orml-benchmarking"
+	"zenlink-protocol/runtime-benchmarks",
 ]
 
 try-runtime = [
