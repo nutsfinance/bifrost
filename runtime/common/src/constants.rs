@@ -33,6 +33,10 @@ pub mod parachains {
 	pub mod phala {
 		pub const ID: u32 = 2004;
 	}
+	pub mod moonriver {
+		pub const ID: u32 = 2023;
+		pub const PALLET_ID: u8 = 3;
+	}
 }
 
 /// Time.
