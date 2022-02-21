@@ -145,6 +145,15 @@ impl<T: Get<ParaId>> Convert<CurrencyId, Option<MultiLocation>> for BifrostCurre
 			Token(TokenSymbol::PHA) =>
 				Some(MultiLocation::new(1, X1(Parachain(parachains::phala::ID)))),
 			_ => None,
+			// Moonriver Native token
+			Token(TokenSymbol::MOVR) => Some(MultiLocation::new(
+				1,
+				X2(
+					Parachain(parachains::moonriver::ID),
+					PalletInstance(parachains::moonriver::PALLET_ID.into()),
+				),
+			)),
+			_ => None,
 		}
 	}
 }
@@ -198,6 +207,12 @@ impl<T: Get<ParaId>> Convert<MultiLocation, Option<CurrencyId>> for BifrostCurre
 						None
 					},
 				X1(Parachain(id)) if id == parachains::phala::ID => Some(Token(TokenSymbol::PHA)),
+				X2(Parachain(id), PalletInstance(index)) if id == parachains::moonriver::ID =>
+					if index == parachains::moonriver::PALLET_ID.into() {
+						Some(Token(TokenSymbol::MOVR))
+					} else {
+						None
+					},
 				_ => None,
 			},
 			MultiLocation { parents, interior } if parents == 0 => match interior {
