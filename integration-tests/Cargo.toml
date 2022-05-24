@@ -125,6 +125,7 @@ xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "6c3584
 
 node-service = { path = "../node/service", features = ["with-all-runtime"] }
 westmint-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.19" }
+moonriver-runtime = { git = "https://github.com/PureStake/moonbeam", rev = "7b223677decb0ed1fdf93095645454faf4d7dab5" }
 
 [features]
 default = ["std"]

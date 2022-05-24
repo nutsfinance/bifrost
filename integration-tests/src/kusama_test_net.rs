@@ -22,6 +22,7 @@ use bifrost_runtime_common::dollar;
 use cumulus_primitives_core::ParaId;
 use frame_support::traits::GenesisBuild;
 use node_primitives::TokenSymbol::KSM;
+use polkadot_parachain::primitives::{DmpMessageHandler, XcmpMessageHandler};
 use polkadot_primitives::v2::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use sp_runtime::traits::AccountIdConversion;
@@ -41,7 +42,7 @@ decl_test_parachain! {
 	pub struct Bifrost {
 		Runtime = Runtime,
 		Origin = Origin,
-		XcmpMessageHandler = bifrost_kusama_runtime ::XcmpQueue,
+		XcmpMessageHandler = bifrost_kusama_runtime::XcmpQueue,
 		DmpMessageHandler = bifrost_kusama_runtime::DmpQueue,
 		new_ext = para_ext(2001),
 	}
@@ -51,7 +52,7 @@ decl_test_parachain! {
 	pub struct Sibling {
 		Runtime = Runtime,
 		Origin = Origin,
-		XcmpMessageHandler = bifrost_kusama_runtime ::XcmpQueue,
+		XcmpMessageHandler = bifrost_kusama_runtime::XcmpQueue,
 		DmpMessageHandler = bifrost_kusama_runtime::DmpQueue,
 		new_ext = para_ext(2000),
 	}
@@ -67,6 +68,16 @@ decl_test_parachain! {
 	}
 }
 
+decl_test_parachain! {
+	pub struct Moonriver {
+		Runtime = moonriver_runtime::Runtime,
+		Origin = moonriver_runtime::Origin,
+		XcmpMessageHandler = moonriver_runtime::XcmpQueue,
+		DmpMessageHandler = moonriver_runtime::DmpQueue,
+		new_ext = para_ext(2023),
+	}
+}
+
 decl_test_network! {
 	pub struct TestNet {
 		relay_chain = KusamaNet,
@@ -74,6 +85,7 @@ decl_test_network! {
 			(1000, Statemine),
 			(2001, Bifrost),
 			(2000, Sibling),
+			(2023, Moonriver),
 		],
 	}
 }
