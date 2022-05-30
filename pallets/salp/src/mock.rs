@@ -37,10 +37,11 @@ use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use xcm_interface::ChainId;
 use xcm_interface::traits::XcmHelper;
 
 use crate as salp;
-use crate::WeightInfo;
+use crate::{AccountIdOf, BalanceOf, WeightInfo};
 
 pub(crate) type AccountId = <<Signature as sp_runtime::traits::Verify>::Signer as sp_runtime::traits::IdentifyAccount>::AccountId;
 pub(crate) type Block = frame_system::mocking::MockBlock<Test>;
@@ -216,8 +217,44 @@ pub(crate) static mut MOCK_XCM_RESULT: (bool, bool) = (true, true);
 // Mock XcmExecutor
 pub struct MockXcmExecutor;
 
-impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>> for MockXcmExecutor {
+impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>, crate::BalanceOf<Test>> for MockXcmExecutor {
 	fn contribute(_index: ParaId, _value: Balance) -> Result<MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_send_mint(_index: ParaId, _account_id: crate::AccountIdOf<Test>, _pool_id: u32, _amounts: Vec<Balance>, _min_mint_amount: Balance, _source_pool_id: u32) -> Result<MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_receive_mint(index: ParaId, account_id: crate::AccountIdOf<Test>, source_pool_id: u32,  mint_amount: Option<Balance>, amounts: Vec<Balance>) -> Result<MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_send_redeem_single(index: ChainId, account_id: AccountIdOf<Test>, target_pool_id: u32, amount: BalanceOf<Test>, i: u32, min_redeem_amount: BalanceOf<Test>, asset_length: u32, source_pool_id: u32) -> Result<xcm_interface::MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_receive_redeem_single(index: ChainId, account_id: AccountIdOf<Test>, source_pool_id: u32, redeem_amount: Option<BalanceOf<Test>>, burn_amount: BalanceOf<Test>) -> Result<xcm_interface::MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
 		match result {

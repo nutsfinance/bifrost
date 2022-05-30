@@ -44,6 +44,7 @@ use sp_runtime::{
 };
 use xcm_interface::traits::XcmHelper;
 use zenlink_protocol::{AssetId as ZenlinkAssetId, LocalAssetHandler, ZenlinkMultiAssets};
+use xcm_interface::ChainId;
 
 use super::*;
 use crate as flexible_fee;
@@ -384,8 +385,44 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 // Mock XcmExecutor
 pub struct MockXcmExecutor;
 
-impl XcmHelper<AccountIdOf<Test>, crate::pallet::PalletBalanceOf<Test>> for MockXcmExecutor {
+impl XcmHelper<AccountIdOf<Test>, crate::pallet::PalletBalanceOf<Test>, crate::pallet::PalletBalanceOf<Test>> for MockXcmExecutor {
 	fn contribute(_index: ParaId, _value: Balance) -> Result<MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_send_mint(_index: ParaId, _account_id: AccountIdOf<Test>, _pool_id: u32, _amounts: Vec<Balance>, _min_mint_amount: Balance, _source_pool_id: u32) -> Result<MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_receive_mint(index: ChainId, account_id: AccountIdOf<Test>, source_pool_id: u32,  mint_amount: Option<Balance>, amounts: Vec<Balance>) -> Result<MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_send_redeem_single(index: ChainId, account_id: AccountIdOf<Test>, target_pool_id: u32, amount: PalletBalanceOf<Test>, i: u32, min_redeem_amount: PalletBalanceOf<Test>, asset_length: u32, source_pool_id: u32) -> Result<xcm_interface::MessageId, DispatchError> {
+		let result = unsafe { MOCK_XCM_RESULT.0 };
+
+		match result {
+			true => Ok([0; 32]),
+			false => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	fn stable_asset_receive_redeem_single(index: ChainId, account_id: AccountIdOf<Test>, source_pool_id: u32, redeem_amount: Option<PalletBalanceOf<Test>>, burn_amount: PalletBalanceOf<Test>) -> Result<xcm_interface::MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
 		match result {

@@ -654,6 +654,7 @@ dependencies = [
  "log",
  "merkle-distributor",
  "node-primitives",
+ "nutsfinance-stable-asset",
  "orml-currencies",
  "orml-tokens",
  "orml-traits",
@@ -5821,6 +5822,22 @@ checksum = "19e64526ebdee182341572e50e9ad03965aa510cd94427a4549448f285e957a1"
 dependencies = [
  "hermit-abi",
  "libc",
+]
+
+[[package]]
+name = "nutsfinance-stable-asset"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -13207,6 +13224,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "nutsfinance-stable-asset",
  "orml-traits",
  "pallet-balances",
  "pallet-xcm",

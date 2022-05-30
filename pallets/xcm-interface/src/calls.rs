@@ -44,6 +44,8 @@ pub mod rococo {
 	pub enum RelaychainCall<BalanceOf, AccountIdOf, BlockNumberOf> {
 		#[codec(index = 28)]
 		Crowdloan(ContributeCall<BalanceOf, AccountIdOf>),
+		#[codec(index = 30)]
+		StableAsset(StableAssetCall<BalanceOf, AccountIdOf>),
 		#[codec(index = 91)]
 		Proxy(ProxyCall<AccountIdOf, BlockNumberOf>),
 	}
@@ -58,6 +60,8 @@ pub mod kusama {
 		#[codec(index = 73)]
 		Crowdloan(ContributeCall<BalanceOf, AccountIdOf>),
 		#[codec(index = 30)]
+		StableAsset(StableAssetCall<BalanceOf, AccountIdOf>),
+		#[codec(index = 30)]
 		Proxy(ProxyCall<AccountIdOf, BlockNumberOf>),
 	}
 }
@@ -70,6 +74,8 @@ pub mod polkadot {
 	pub enum RelaychainCall<BalanceOf, AccountIdOf, BlockNumberOf> {
 		#[codec(index = 73)]
 		Crowdloan(ContributeCall<BalanceOf, AccountIdOf>),
+		#[codec(index = 30)]
+		StableAsset(StableAssetCall<BalanceOf, AccountIdOf>),
 		#[codec(index = 29)]
 		Proxy(ProxyCall<AccountIdOf, BlockNumberOf>),
 	}
@@ -137,4 +143,52 @@ pub struct RemoveProxy<AccountIdOf, BlockNumberOf> {
 	pub delegate: AccountIdOf,
 	pub proxy_type: ProxyType,
 	pub delay: BlockNumberOf,
+}
+
+#[derive(Encode, Decode, RuntimeDebug)]
+pub enum StableAssetCall<BalanceOf, AccountIdOf> {
+	#[codec(index = 9)]
+	Mint(Mint<BalanceOf, AccountIdOf>),
+	#[codec(index = 11)]
+	ReceiveMint(ReceiveMint<BalanceOf, AccountIdOf>),
+	#[codec(index = 12)]
+	RedeemSingle(RedeemSingle<BalanceOf, AccountIdOf>),
+	#[codec(index = 14)]
+	ReceiveRedeemSingle(ReceiveRedeemSingle<BalanceOf, AccountIdOf>),
+}
+
+#[derive(PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct Mint<BalanceOf, AccountIdOf> {
+	pub account_id: AccountIdOf,
+	pub target_pool_id: u32,
+	pub amounts: Vec<BalanceOf>,
+	pub min_mint_amount: BalanceOf,
+	pub source_pool_id: u32,
+}
+
+#[derive(PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct ReceiveMint<BalanceOf, AccountIdOf> {
+	pub account_id: AccountIdOf,
+	pub source_pool_id: u32,
+	pub mint_amount: Option<BalanceOf>,
+	pub amounts: Vec<BalanceOf>,
+}
+
+#[derive(PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct RedeemSingle<BalanceOf, AccountIdOf> {
+	pub account_id: AccountIdOf,
+	pub target_pool_id: u32,
+	pub amount: BalanceOf,
+	pub i: u32,
+	pub min_redeem_amount: BalanceOf,
+	pub asset_length: u32,
+	pub source_pool_id: u32,
+}
+
+#[derive(PartialEq, Encode, Decode, RuntimeDebug)]
+pub struct ReceiveRedeemSingle<BalanceOf, AccountIdOf> {
+	pub account_id: AccountIdOf,
+	pub source_pool_id: u32,
+	pub redeem_amount: Option<BalanceOf>,
+	pub burn_amount: BalanceOf,
 }

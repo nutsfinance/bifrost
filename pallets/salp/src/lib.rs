@@ -157,7 +157,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		/// The XcmInterface to manage the staking of sub-account on relaychain.
-		type XcmInterface: XcmHelper<AccountIdOf<Self>, BalanceOf<Self>>;
+		type XcmInterface: XcmHelper<AccountIdOf<Self>, BalanceOf<Self>, BalanceOf<Self>>;
 	}
 
 	#[pallet::pallet]

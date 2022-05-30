@@ -17,6 +17,7 @@ members = [
 	"pallets/call-switchgear",
 	"pallets/xcm-interface",
 	"pallets/slp",
+	"pallets/stable-asset",
 	"pallets/vtoken-minting",
 	"pallets/vstoken-conversion",
 	"runtime/bifrost-kusama",

@@ -157,7 +157,8 @@ macro_rules! create_currency_id {
 					| Self::VSToken(ts)
 					| Self::VSBond(ts, ..) => ts as u8,
 					Self::ForeignAsset(..) => 0u8,
-					Self::LPToken(..) => 0u8
+					Self::LPToken(..) => 0u8,
+					Self::StableAssetPoolToken(..) => 0u8,
 				} as u64;
 
 		 		let discr = (c_discr << 8) + t_discr;
@@ -191,6 +192,9 @@ macro_rules! create_currency_id {
 						(((*token_symbol_2 as u64) << 32) & 0x0000_00ff_0000_0000) + (((*token_type_2 as u64) << 40) & 0x0000_ff00_0000_0000) + discr
 					},
 					Self::ForeignAsset(asset_token_id) => {
+						(((*asset_token_id as u64) << 16) & 0x0000_ffff_ffff_0000) + discr
+					}
+					Self::StableAssetPoolToken(asset_token_id) => {
 						(((*asset_token_id as u64) << 16) & 0x0000_ffff_ffff_0000) + discr
 					}
 				}
@@ -286,7 +290,7 @@ impl Default for TokenSymbol {
 }
 
 pub type ForeignAssetId = u32;
-
+pub type StableAssetPoolId = u32;
 /// Currency ID, it might be extended with more variants in the future.
 #[derive(
 	Encode,
@@ -313,6 +317,7 @@ pub enum CurrencyId {
 	// [currency1 Tokensymbol, currency1 TokenType, currency2 TokenSymbol, currency2 TokenType]
 	LPToken(TokenSymbol, u8, TokenSymbol, u8),
 	ForeignAsset(ForeignAssetId),
+	StableAssetPoolToken(StableAssetPoolId),
 }
 
 impl Default for CurrencyId {
@@ -377,6 +382,7 @@ impl CurrencyId {
 			Self::VSBond(..) => 5,
 			Self::LPToken(..) => 6,
 			Self::ForeignAsset(..) => 7,
+			Self::StableAssetPoolToken(..) => 8,
 		}
 	}
 }

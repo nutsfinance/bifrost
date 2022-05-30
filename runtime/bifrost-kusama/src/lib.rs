@@ -33,7 +33,7 @@ use bifrost_slp::QueryResponseManager;
 pub use frame_support::{
 	construct_runtime, match_types, parameter_types,
 	traits::{
-		Contains, EqualPrivilegeOnly, Everything, InstanceFilter, IsInVec, Nothing, Randomness,
+		ConstU32, ConstU128, Contains, EqualPrivilegeOnly, Everything, InstanceFilter, IsInVec, Nothing, Randomness,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -112,12 +112,13 @@ use xcm_builder::{
 	TakeWeightCredit,
 };
 use xcm_executor::XcmExecutor;
-pub use xcm_interface::traits::{parachains, XcmBaseWeight};
+pub use xcm_interface::traits::{parachains, XcmBaseWeight, XcmHelper};
 // zenlink imports
 use zenlink_protocol::{
 	make_x2_location, AssetBalance, AssetId as ZenlinkAssetId, LocalAssetHandler,
 	MultiAssetsHandler, PairInfo, ZenlinkMultiAssets,
 };
+
 // Weights used in the runtime.
 mod weights;
 
@@ -127,6 +128,9 @@ use xcm_config::{
 	BifrostAccountIdToMultiLocation, BifrostAssetMatcher, BifrostCurrencyIdConvert,
 	MultiNativeAsset,
 };
+
+/// Import the stable_asset pallet.
+pub use nutsfinance_stable_asset;
 
 impl_opaque_keys! {
 	pub struct SessionKeys {
@@ -302,6 +306,7 @@ parameter_types! {
 	pub const BifrostVsbondPalletId: PalletId = PalletId(*b"bf/salpb");
 	pub const SlpEntrancePalletId: PalletId = PalletId(*b"bf/vtkin");
 	pub const SlpExitPalletId: PalletId = PalletId(*b"bf/vtout");
+	pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
 }
 
 impl frame_system::Config for Runtime {
@@ -1891,6 +1896,111 @@ where
 	}
 }
 
+parameter_types! {
+	pub const GetLiquidCurrencyId: CurrencyId = CurrencyId::Native(TokenSymbol::KSM);
+}
+
+pub struct EnsurePoolAssetId;
+impl nutsfinance_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoolAssetId {
+	fn validate(currency_id: CurrencyId) -> bool {
+		matches!(currency_id, CurrencyId::StableAssetPoolToken(_))
+	}
+}
+
+pub struct ConvertBalanceHoma;
+impl orml_tokens::ConvertBalance<Balance, Balance> for ConvertBalanceHoma {
+	type AssetId = CurrencyId;
+
+	fn convert_balance(balance: Balance, _asset_id: CurrencyId) -> Balance {
+		balance
+	}
+
+	fn convert_balance_back(balance: Balance, _asset_id: CurrencyId) -> Balance {
+		balance
+	}
+}
+
+pub struct IsLiquidToken;
+impl Contains<CurrencyId> for IsLiquidToken {
+	fn contains(_currency_id: &CurrencyId) -> bool {
+		false
+	}
+}
+
+type RebaseTokens = orml_tokens::Combiner<
+	AccountId,
+	IsLiquidToken,
+	orml_tokens::Mapper<AccountId, Tokens, ConvertBalanceHoma, Balance, GetLiquidCurrencyId>,
+	Tokens,
+>;
+
+pub struct StableAssetXcmInterface;
+impl nutsfinance_stable_asset::traits::XcmInterface for StableAssetXcmInterface {
+	type Balance = Balance;
+	type AccountId = AccountId;
+	fn send_mint_call_to_xcm(
+		account_id: Self::AccountId,
+		pool_id: u32,
+		amounts: Vec<Self::Balance>,
+		min_mint_amount: Self::Balance,
+		source_pool_id: u32,
+	) -> DispatchResult {
+		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(SelfParaChainId::get().into(), account_id, pool_id, amounts, min_mint_amount, source_pool_id)?;
+		Ok(().into())
+	}
+
+	fn send_mint_result_to_xcm(
+		account_id: Self::AccountId,
+		source_pool_id: u32,
+		mint_amount: Option<Self::Balance>,
+		amounts: Vec<Self::Balance>,
+	) -> DispatchResult {
+		xcm_interface::Pallet::<Runtime>::stable_asset_receive_mint(SelfParaChainId::get().into(), account_id, source_pool_id, mint_amount, amounts)?;
+		Ok(().into())
+	}
+
+	fn send_redeem_single_call_to_xcm(
+		account_id: Self::AccountId,
+		target_pool_id: u32,
+		amount: Self::Balance,
+		i: u32,
+		min_redeem_amount: Self::Balance,
+		asset_length: u32,
+		source_pool_id: u32,
+	) -> DispatchResult {
+		xcm_interface::Pallet::<Runtime>::stable_asset_send_redeem_single(SelfParaChainId::get().into(), account_id, target_pool_id, amount, i, min_redeem_amount, asset_length, source_pool_id)?;
+		Ok(().into())
+	}
+
+	fn send_redeem_single_result_to_xcm(
+		account_id: Self::AccountId,
+		source_pool_id: u32,
+		redeem_amount: Option<Self::Balance>,
+		burn_amount: Self::Balance,
+	) -> DispatchResult {
+		xcm_interface::Pallet::<Runtime>::stable_asset_receive_redeem_single(SelfParaChainId::get().into(), account_id, source_pool_id, redeem_amount, burn_amount)?;
+		Ok(().into())
+	}
+}
+
+impl nutsfinance_stable_asset::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Assets = RebaseTokens;
+	type PalletId = StableAssetPalletId;
+
+	type AtLeast64BitUnsigned = u128;
+	type FeePrecision = ConstU128<10_000_000_000>; // 10 decimals
+	type APrecision = ConstU128<100>; // 2 decimals
+	type PoolAssetLimit = ConstU32<5>;
+	type SwapExactOverAmount = ConstU128<100>;
+	type WeightInfo = weights::nutsfinance_stable_asset::WeightInfo<Runtime>;
+	type ListingOrigin = EnsureRootOrAllTechnicalCommittee;
+	type EnsurePoolAssetId = EnsurePoolAssetId;
+	type XcmInterface = StableAssetXcmInterface;
+}
+
 // zenlink runtime end
 
 construct_runtime! {
@@ -1971,6 +2081,9 @@ construct_runtime! {
 		Slp: bifrost_slp::{Pallet, Call, Storage, Event<T>} = 116,
 		XcmInterface: xcm_interface::{Pallet, Call, Storage, Event<T>} = 117,
 		VstokenConversion: bifrost_vstoken_conversion::{Pallet, Call, Storage, Event<T>} = 118,
+
+		// Stable asset
+		StableAsset: nutsfinance_stable_asset = 200,
 	}
 }
 

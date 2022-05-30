@@ -114,6 +114,10 @@ pub mod parachains {
 	}
 }
 
-pub trait XcmHelper<AccountId, Balance> {
+pub trait XcmHelper<AccountId, Balance, StableAssetBalance> {
 	fn contribute(index: ChainId, value: Balance) -> Result<MessageId, DispatchError>;
+	fn stable_asset_send_mint(index: ChainId, account_id: AccountId, target_pool_id: u32, amounts: Vec<StableAssetBalance>, min_mint_amount: StableAssetBalance, source_pool_id: u32) -> Result<MessageId, DispatchError>;
+	fn stable_asset_receive_mint(index: ChainId, account_id: AccountId, source_pool_id: u32,  mint_amount: Option<StableAssetBalance>, amounts: Vec<StableAssetBalance>) -> Result<MessageId, DispatchError>;
+	fn stable_asset_send_redeem_single(index: ChainId, account_id: AccountId, target_pool_id: u32, amount: StableAssetBalance, i: u32, min_redeem_amount: StableAssetBalance, asset_length: u32, source_pool_id: u32) -> Result<MessageId, DispatchError>;
+	fn stable_asset_receive_redeem_single(index: ChainId, account_id: AccountId, source_pool_id: u32,  redeem_amount: Option<StableAssetBalance>, burn_amount: StableAssetBalance) -> Result<MessageId, DispatchError>;
 }
