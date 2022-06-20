@@ -279,6 +279,14 @@ pub mod pallet {
 		}
 	}
 
+	#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
+	pub struct ParentThen(Junctions);
+	impl From<ParentThen> for MultiLocation {
+		fn from(ParentThen(interior): ParentThen) -> Self {
+			MultiLocation { parents: 1, interior }
+		}
+	}
+
 	impl<T: Config> XcmHelper<AccountIdOf<T>, BalanceOf<T>, StableAssetBalanceOf<T>> for Pallet<T> {
 		fn contribute(index: ChainId, value: BalanceOf<T>) -> Result<MessageId, DispatchError> {
 			let contribute_call = Self::build_ump_crowdloan_contribute(index, value);
@@ -298,16 +306,19 @@ pub mod pallet {
 
 		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, amounts: Vec<StableAssetBalanceOf<T>>, min_mint_amount: StableAssetBalanceOf<T>, source_pool_id: u32) -> Result<MessageId, DispatchError> {
 			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, amounts, min_mint_amount, source_pool_id);
+			log::error!("after send_mint_call");
 			let (dest_weight, xcm_fee) =
 				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
 					.unwrap_or((T::ContributionWeight::get(), T::ContributionFee::get()));
-
+			log::error!("after dest_weight");
 			let nonce = Self::next_nonce_index(index)?;
-
+			log::error!("after nonce");
 			let (msg_id, msg) =
-				Self::build_ump_transact(send_mint_call, dest_weight, xcm_fee, nonce)?;
+				Self::build_xcmp_transact(send_mint_call, dest_weight, xcm_fee, nonce)?;
+			log::error!("after build_ump_transact");
 
-			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, Junctions::X1(Junction::Parachain(parachains::karura::ID)), msg);
+			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, ParentThen(Junctions::X1(Junction::Parachain(parachains::karura::ID))), msg);
+			log::error!("after result {:#?}", result);
 			ensure!(result.is_ok(), Error::<T>::XcmSendFailed);
 			Ok(msg_id)
 		}
@@ -398,6 +409,33 @@ pub mod pallet {
 				},
 				RefundSurplus,
 				DepositAsset { assets: All.into(), max_assets: 1, beneficiary: sovereign_location },
+			]);
+			let data = VersionedXcm::<()>::from(message.clone()).encode();
+			let id = Self::transact_id(&data[..]);
+			Ok((id, message))
+		}
+
+		pub(crate) fn build_xcmp_transact(
+			call: DoubleEncoded<()>,
+			weight: Weight,
+			fee: BalanceOf<T>,
+			nonce: Nonce,
+		) -> Result<(MessageId, Xcm<()>), Error<T>> {
+			let sovereign_account: AccountIdOf<T> = T::ParachainSovereignAccount::get();
+			let sovereign_location: MultiLocation =
+				T::AccountIdToMultiLocation::convert(sovereign_account);
+			let fee_amount =
+				TryInto::<u128>::try_into(fee).map_err(|_| Error::<T>::FeeConvertFailed)?;
+			let asset: MultiAsset = MultiAsset {
+				id: Concrete(MultiLocation::here()),
+				fun: Fungibility::from(fee_amount),
+			};
+			let message = Xcm(vec![
+				Transact {
+					origin_type: OriginKind::SovereignAccount,
+					require_weight_at_most: weight + nonce as u64,
+					call,
+				},
 			]);
 			let data = VersionedXcm::<()>::from(message.clone()).encode();
 			let id = Self::transact_id(&data[..]);

@@ -26,7 +26,7 @@ use bifrost_kusama_runtime::{
 	DefaultBlocksPerRound, DemocracyConfig, GenesisConfig, IndicesConfig, InflationInfo,
 	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, Range, SS58Prefix, SalpConfig,
 	SalpLiteConfig, SessionConfig, SystemConfig, TechnicalCommitteeConfig,
-	TechnicalMembershipConfig, TokensConfig, VestingConfig, WASM_BINARY,
+	TechnicalMembershipConfig, TokensConfig, VestingConfig, WASM_BINARY, SudoConfig
 };
 use bifrost_runtime_common::{dollar, AuraId};
 use cumulus_primitives_core::ParaId;
@@ -127,6 +127,7 @@ pub fn bifrost_genesis(
 	technical_committee_membership: Vec<AccountId>,
 	salp_multisig_key: AccountId,
 	salp_lite_multisig_key_salp: AccountId,
+	root_key: AccountId
 ) -> GenesisConfig {
 	GenesisConfig {
 		system: SystemConfig {
@@ -181,6 +182,7 @@ pub fn bifrost_genesis(
 			delegations,
 			inflation_config: inflation_config(),
 		},
+		sudo: SudoConfig { key: Some(root_key) },
 	}
 }
 
@@ -232,6 +234,7 @@ fn development_config_genesis(id: ParaId) -> GenesisConfig {
 		technical_committee_membership,
 		salp_multisig,
 		salp_lite_multisig,
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
 	)
 }
 
@@ -329,6 +332,7 @@ fn local_config_genesis(id: ParaId) -> GenesisConfig {
 		technical_committee_membership,
 		salp_multisig,
 		salp_lite_multisig,
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
 	)
 }
 
@@ -422,6 +426,7 @@ fn stage_config_genesis(id: ParaId) -> GenesisConfig {
 		technical_committee_membership,
 		salp_multisig,
 		salp_lite_multisig,
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
 	)
 }
 
@@ -544,6 +549,7 @@ fn bifrost_config_genesis(id: ParaId) -> GenesisConfig {
 		vec![], // technical committee membership
 		salp_multisig,
 		salp_lite_multisig,
+		get_account_id_from_seed::<sr25519::Public>("Alice"),
 	)
 }
 

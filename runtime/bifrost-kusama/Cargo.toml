@@ -79,6 +79,7 @@ parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polk
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19", default-features = false }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19", default-features = false }
+pallet-sudo = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19", default-features = false }
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19", default-features = false }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.19", default-features = false }
@@ -151,6 +152,7 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-elections-phragmen/std",
 	"pallet-tips/std",
+	"pallet-sudo/std",
 	"sp-api/std",
 	"sp-arithmetic/std",
 	"sp-block-builder/std",

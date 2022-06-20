@@ -1357,6 +1357,7 @@ parameter_type_with_key! {
 			&CurrencyId::VSBond(TokenSymbol::KSM, ..) => 10 * millicent(RelayCurrencyId::get()),
 			&CurrencyId::VSBond(TokenSymbol::DOT, ..) => 1 * cent(PolkadotCurrencyId::get()),
 			&CurrencyId::LPToken(..) => 10 * millicent(NativeCurrencyId::get()),
+			&CurrencyId::StableAssetPoolToken(..) => 10 * millicent(NativeCurrencyId::get()),
 			&CurrencyId::VToken(TokenSymbol::KSM) => 10 * millicent(RelayCurrencyId::get()),  // 0.0001 vKSM
 			&CurrencyId::Token(TokenSymbol::RMRK) => 1 * micro(CurrencyId::Token(TokenSymbol::RMRK)),
 			&CurrencyId::Token(TokenSymbol::MOVR) => 1 * micro(CurrencyId::Token(TokenSymbol::MOVR)),	// MOVR has a decimals of 10e18
@@ -2001,6 +2002,11 @@ impl nutsfinance_stable_asset::Config for Runtime {
 	type XcmInterface = StableAssetXcmInterface;
 }
 
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
+
 // zenlink runtime end
 
 construct_runtime! {
@@ -2084,6 +2090,9 @@ construct_runtime! {
 
 		// Stable asset
 		StableAsset: nutsfinance_stable_asset = 200,
+
+		// Temporary
+		Sudo: pallet_sudo = 255,
 	}
 }
 
