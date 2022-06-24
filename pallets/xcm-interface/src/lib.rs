@@ -304,7 +304,7 @@ pub mod pallet {
 			Ok(msg_id)
 		}
 
-		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, amounts: Vec<StableAssetBalanceOf<T>>, min_mint_amount: StableAssetBalanceOf<T>, source_pool_id: u32) -> Result<MessageId, DispatchError> {
+		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, amounts: Vec<BalanceOf<T>>, min_mint_amount: BalanceOf<T>, source_pool_id: u32) -> Result<MessageId, DispatchError> {
 			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, amounts, min_mint_amount, source_pool_id);
 			log::error!("after send_mint_call");
 			let (dest_weight, xcm_fee) =
@@ -433,7 +433,7 @@ pub mod pallet {
 			let message = Xcm(vec![
 				Transact {
 					origin_type: OriginKind::SovereignAccount,
-					require_weight_at_most: weight + nonce as u64,
+					require_weight_at_most: 8_500_694_000u64,
 					call,
 				},
 			]);
@@ -460,13 +460,15 @@ pub mod pallet {
 		pub(crate) fn build_stable_asset_send_mint(
 			account_id: AccountIdOf<T>,
 			target_pool_id: u32,
-			amounts: Vec<StableAssetBalanceOf<T>>,
-			min_mint_amount: StableAssetBalanceOf<T>,
+			amounts: Vec<BalanceOf<T>>,
+			min_mint_amount: BalanceOf<T>,
 			source_pool_id: u32,
 		) -> DoubleEncoded<()> {
 			use_relay!({
 				let contribute_call =
-					nutsfinance_stable_asset::Call::<T>::from(nutsfinance_stable_asset::Call::<T>::process_xcm_mint{account_id, target_pool_id, amounts, min_mint_amount, source_pool_id})
+				RelaychainCall::StableAsset::<BalanceOf<T>, AccountIdOf<T>, BlockNumberFor<T>>(
+					StableAssetCall::Mint(Mint {account_id, target_pool_id, amounts, min_mint_amount, source_pool_id})
+				)
 					.encode()
 					.into();
 				contribute_call
