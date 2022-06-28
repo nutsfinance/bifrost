@@ -304,69 +304,16 @@ pub mod pallet {
 			Ok(msg_id)
 		}
 
-		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, amounts: Vec<BalanceOf<T>>, min_mint_amount: BalanceOf<T>, source_pool_id: u32) -> Result<MessageId, DispatchError> {
-			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, amounts, min_mint_amount, source_pool_id);
-			log::error!("after send_mint_call");
+		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, chain_id: u32, mint_amount: BalanceOf<T>) -> Result<MessageId, DispatchError> {
+			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, chain_id, mint_amount);
 			let (dest_weight, xcm_fee) =
 				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
 					.unwrap_or((T::ContributionWeight::get(), T::ContributionFee::get()));
-			log::error!("after dest_weight");
 			let nonce = Self::next_nonce_index(index)?;
-			log::error!("after nonce");
 			let (msg_id, msg) =
 				Self::build_xcmp_transact(send_mint_call, dest_weight, xcm_fee, nonce)?;
-			log::error!("after build_ump_transact");
 
 			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, ParentThen(Junctions::X1(Junction::Parachain(parachains::karura::ID))), msg);
-			log::error!("after result {:#?}", result);
-			ensure!(result.is_ok(), Error::<T>::XcmSendFailed);
-			Ok(msg_id)
-		}
-
-		fn stable_asset_receive_mint(index: ChainId, account_id: AccountIdOf<T>, source_pool_id: u32,  mint_amount: Option<StableAssetBalanceOf<T>>, amounts: Vec<StableAssetBalanceOf<T>>) -> Result<MessageId, DispatchError> {
-			let receive_mint_call = Self::build_stable_asset_receive_mint(account_id, source_pool_id, mint_amount, amounts);
-			let (dest_weight, xcm_fee) =
-				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
-					.unwrap_or((T::ContributionWeight::get(), T::ContributionFee::get()));
-
-			let nonce = Self::next_nonce_index(index)?;
-
-			let (msg_id, msg) =
-				Self::build_ump_transact(receive_mint_call, dest_weight, xcm_fee, nonce)?;
-
-			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, Junctions::X1(Junction::Parachain(parachains::karura::ID)), msg);
-			ensure!(result.is_ok(), Error::<T>::XcmSendFailed);
-			Ok(msg_id)
-		}
-
-		fn stable_asset_send_redeem_single(index: ChainId, account_id: AccountIdOf<T>, target_pool_id: u32, amount: StableAssetBalanceOf<T>, i: u32, min_redeem_amount: StableAssetBalanceOf<T>, asset_length: u32, source_pool_id: u32) -> Result<MessageId, DispatchError> {
-			let send_redeem_call = Self::build_stable_asset_send_redeem_single(account_id, target_pool_id, amount, i,min_redeem_amount, asset_length, source_pool_id);
-			let (dest_weight, xcm_fee) =
-				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
-					.unwrap_or((T::ContributionWeight::get(), T::ContributionFee::get()));
-
-			let nonce = Self::next_nonce_index(index)?;
-
-			let (msg_id, msg) =
-				Self::build_ump_transact(send_redeem_call, dest_weight, xcm_fee, nonce)?;
-
-			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, Junctions::X1(Junction::Parachain(parachains::karura::ID)), msg);
-			ensure!(result.is_ok(), Error::<T>::XcmSendFailed);
-			Ok(msg_id)
-		}
-
-		fn stable_asset_receive_redeem_single(index: ChainId, account_id: AccountIdOf<T>, source_pool_id: u32, redeem_amount: Option<StableAssetBalanceOf<T>>, burn_amount: StableAssetBalanceOf<T>) -> Result<MessageId, DispatchError> {
-			let receive_redeem_call = Self::build_stable_asset_receive_redeem_single(account_id, source_pool_id, redeem_amount, burn_amount);
-			let (dest_weight, xcm_fee) =
-				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
-					.unwrap_or((T::ContributionWeight::get(), T::ContributionFee::get()));
-
-			let nonce = Self::next_nonce_index(index)?;
-
-			let (msg_id, msg) =
-				Self::build_ump_transact(receive_redeem_call, dest_weight, xcm_fee, nonce)?;
-
-			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, Junctions::X1(Junction::Parachain(parachains::karura::ID)), msg);
 			ensure!(result.is_ok(), Error::<T>::XcmSendFailed);
 			Ok(msg_id)
 		}
@@ -459,67 +406,18 @@ pub mod pallet {
 
 		pub(crate) fn build_stable_asset_send_mint(
 			account_id: AccountIdOf<T>,
-			target_pool_id: u32,
-			amounts: Vec<BalanceOf<T>>,
-			min_mint_amount: BalanceOf<T>,
-			source_pool_id: u32,
+			remote_pool_id: u32,
+			chain_id: u32,
+			mint_amount: BalanceOf<T>,
 		) -> DoubleEncoded<()> {
 			use_relay!({
-				let contribute_call =
+				let mint_call =
 				RelaychainCall::StableAsset::<BalanceOf<T>, AccountIdOf<T>, BlockNumberFor<T>>(
-					StableAssetCall::Mint(Mint {account_id, target_pool_id, amounts, min_mint_amount, source_pool_id})
+					StableAssetCall::Mint(Mint {account_id, pool_id: remote_pool_id, chain_id, amount: mint_amount})
 				)
 					.encode()
 					.into();
-				contribute_call
-			})
-		}
-
-		pub(crate) fn build_stable_asset_receive_mint(
-			account_id: AccountIdOf<T>,
-			source_pool_id: u32,
-			mint_amount: Option<StableAssetBalanceOf<T>>,
-			amounts: Vec<StableAssetBalanceOf<T>>,
-		) -> DoubleEncoded<()> {
-			use_relay!({
-				let contribute_call =
-					nutsfinance_stable_asset::Call::<T>::from(nutsfinance_stable_asset::Call::<T>::receive_mint_from_xcm{account_id, source_pool_id, mint_amount_opt: mint_amount, amounts})
-					.encode()
-					.into();
-				contribute_call
-			})
-		}
-
-		pub(crate) fn build_stable_asset_send_redeem_single(
-			account_id: AccountIdOf<T>,
-			target_pool_id: u32,
-			amount: StableAssetBalanceOf<T>,
-			i: u32,
-			min_redeem_amount: StableAssetBalanceOf<T>,
-			asset_length: u32,
-			source_pool_id: u32,
-		) -> DoubleEncoded<()> {
-			use_relay!({
-				let contribute_call =
-					nutsfinance_stable_asset::Call::<T>::from(nutsfinance_stable_asset::Call::<T>::process_xcm_redeem_single{account_id, target_pool_id, amount, i, min_redeem_amount, asset_length, source_pool_id})
-					.encode()
-					.into();
-				contribute_call
-			})
-		}
-
-		pub(crate) fn build_stable_asset_receive_redeem_single(
-			account_id: AccountIdOf<T>,
-			source_pool_id: u32,
-			redeem_amount: Option<StableAssetBalanceOf<T>>,
-			burn_amount: StableAssetBalanceOf<T>,
-		) -> DoubleEncoded<()> {
-			use_relay!({
-				let contribute_call =
-					nutsfinance_stable_asset::Call::<T>::from(nutsfinance_stable_asset::Call::<T>::receive_redeem_single_from_xcm{account_id, source_pool_id, redeem_amount_opt: redeem_amount, burn_amount})
-					.encode()
-					.into();
-				contribute_call
+				mint_call
 			})
 		}
 	}

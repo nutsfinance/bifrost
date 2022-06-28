@@ -94,6 +94,7 @@ type AtLeast64BitUnsigned = u128;
 
 pub type AssetId = i64;
 
+use crate::{ParachainId, StableAssetXcmPoolId};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
@@ -190,7 +191,7 @@ impl Inspect<AccountId> for TestAssets {
 		todo!()
 	}
 
-	fn can_deposit(_asset: Self::AssetId, _who: &AccountId, _amount: Balance) -> DepositConsequence {
+	fn can_deposit(_asset: Self::AssetId, _who: &AccountId, _amount: Balance, _mint: bool) -> DepositConsequence {
 		todo!()
 	}
 
@@ -244,53 +245,23 @@ impl crate::traits::ValidateAssetId<i64> for EnsurePoolAssetId {
 	}
 }
 
-pub struct XcmInterface;
-impl crate::traits::XcmInterface for XcmInterface {
-	type Balance = u128;
-	type AccountId = AccountId;
-	fn send_mint_call_to_xcm(
-		_account_id: Self::AccountId,
-		_pool_id: u32,
-		_amounts: Vec<Self::Balance>,
-		_min_mint_amount: Self::Balance,
-		_source_pool_id: u32,
-	) -> DispatchResult {
-		Ok(().into())
-	}
-
-	fn send_mint_result_to_xcm(
-		_account_id: Self::AccountId,
-		_source_pool_id: u32,
-		_mint_amount: Option<Self::Balance>,
-		_amounts: Vec<Self::Balance>,
-	) -> DispatchResult {
-		Ok(().into())
-	}
-
-	fn send_redeem_single_call_to_xcm(
-		_account_id: Self::AccountId,
-		_target_pool_id: u32,
-		_amount: Self::Balance,
-		_i: u32,
-		_min_redeem_amount: Self::Balance,
-		_asset_length: u32,
-		_source_pool_id: u32,
-	) -> DispatchResult {
-		Ok(().into())
-	}
-
-	fn send_redeem_single_result_to_xcm(
-		_account_id: Self::AccountId,
-		_source_pool_id: u32,
-		_redeem_amount: Option<Self::Balance>,
-		_burn_amount: Self::Balance,
-	) -> DispatchResult {
-		Ok(().into())
-	}
-}
-
 parameter_types! {
 	pub const StableAssetPalletId: PalletId = PalletId(*b"nuts/sta");
+}
+
+pub struct XcmInterface;
+impl crate::traits::XcmInterface for XcmInterface {
+	type Balance = Balance;
+	type AccountId = AccountId;
+
+	fn send_mint_call_to_xcm(
+		_account_id: Self::AccountId,
+		_remote_pool_id: StableAssetXcmPoolId,
+		_chain_id: ParachainId,
+		_mint_amount: Self::Balance,
+	) -> DispatchResult {
+		Ok(())
+	}
 }
 
 impl stable_asset::Config for Test {
@@ -305,10 +276,11 @@ impl stable_asset::Config for Test {
 	type APrecision = ConstU128<100>;
 	type PoolAssetLimit = ConstU32<5>;
 	type SwapExactOverAmount = ConstU128<100>;
+	type ChainId = ConstU32<100>;
+	type XcmInterface = XcmInterface;
 	type WeightInfo = ();
 	type ListingOrigin = EnsureStableAsset;
 	type EnsurePoolAssetId = EnsurePoolAssetId;
-	type XcmInterface = XcmInterface;
 }
 
 // Build genesis storage according to the mock runtime.

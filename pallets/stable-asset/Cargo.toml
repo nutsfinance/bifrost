@@ -25,6 +25,11 @@ default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.19"
 
+[dependencies.sp-core]
+default-features = false
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.19"
+
 [dev-dependencies]
 serde = { version = "1.0.101" }
 

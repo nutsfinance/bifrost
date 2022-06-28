@@ -227,34 +227,7 @@ impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>, crate::BalanceO
 		}
 	}
 
-	fn stable_asset_send_mint(_index: ParaId, _account_id: crate::AccountIdOf<Test>, _pool_id: u32, _amounts: Vec<Balance>, _min_mint_amount: Balance, _source_pool_id: u32) -> Result<MessageId, DispatchError> {
-		let result = unsafe { MOCK_XCM_RESULT.0 };
-
-		match result {
-			true => Ok([0; 32]),
-			false => Err(DispatchError::BadOrigin),
-		}
-	}
-
-	fn stable_asset_receive_mint(index: ParaId, account_id: crate::AccountIdOf<Test>, source_pool_id: u32,  mint_amount: Option<Balance>, amounts: Vec<Balance>) -> Result<MessageId, DispatchError> {
-		let result = unsafe { MOCK_XCM_RESULT.0 };
-
-		match result {
-			true => Ok([0; 32]),
-			false => Err(DispatchError::BadOrigin),
-		}
-	}
-
-	fn stable_asset_send_redeem_single(index: ChainId, account_id: AccountIdOf<Test>, target_pool_id: u32, amount: BalanceOf<Test>, i: u32, min_redeem_amount: BalanceOf<Test>, asset_length: u32, source_pool_id: u32) -> Result<xcm_interface::MessageId, DispatchError> {
-		let result = unsafe { MOCK_XCM_RESULT.0 };
-
-		match result {
-			true => Ok([0; 32]),
-			false => Err(DispatchError::BadOrigin),
-		}
-	}
-
-	fn stable_asset_receive_redeem_single(index: ChainId, account_id: AccountIdOf<Test>, source_pool_id: u32, redeem_amount: Option<BalanceOf<Test>>, burn_amount: BalanceOf<Test>) -> Result<xcm_interface::MessageId, DispatchError> {
+	fn stable_asset_send_mint(_index: ParaId, _account_id: crate::AccountIdOf<Test>, _pool_id: u32, _chain_id: u32, _mint_amount: Balance) -> Result<MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
 		match result {

@@ -1941,45 +1941,11 @@ impl nutsfinance_stable_asset::traits::XcmInterface for StableAssetXcmInterface 
 	type AccountId = AccountId;
 	fn send_mint_call_to_xcm(
 		account_id: Self::AccountId,
-		pool_id: u32,
-		amounts: Vec<Self::Balance>,
-		min_mint_amount: Self::Balance,
-		source_pool_id: u32,
+		remote_pool_id: u32,
+		chain_id: u32,
+		mint_amount: Self::Balance,
 	) -> DispatchResult {
-		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(SelfParaChainId::get().into(), account_id, pool_id, amounts, min_mint_amount, source_pool_id)?;
-		Ok(().into())
-	}
-
-	fn send_mint_result_to_xcm(
-		account_id: Self::AccountId,
-		source_pool_id: u32,
-		mint_amount: Option<Self::Balance>,
-		amounts: Vec<Self::Balance>,
-	) -> DispatchResult {
-		xcm_interface::Pallet::<Runtime>::stable_asset_receive_mint(SelfParaChainId::get().into(), account_id, source_pool_id, mint_amount, amounts)?;
-		Ok(().into())
-	}
-
-	fn send_redeem_single_call_to_xcm(
-		account_id: Self::AccountId,
-		target_pool_id: u32,
-		amount: Self::Balance,
-		i: u32,
-		min_redeem_amount: Self::Balance,
-		asset_length: u32,
-		source_pool_id: u32,
-	) -> DispatchResult {
-		xcm_interface::Pallet::<Runtime>::stable_asset_send_redeem_single(SelfParaChainId::get().into(), account_id, target_pool_id, amount, i, min_redeem_amount, asset_length, source_pool_id)?;
-		Ok(().into())
-	}
-
-	fn send_redeem_single_result_to_xcm(
-		account_id: Self::AccountId,
-		source_pool_id: u32,
-		redeem_amount: Option<Self::Balance>,
-		burn_amount: Self::Balance,
-	) -> DispatchResult {
-		xcm_interface::Pallet::<Runtime>::stable_asset_receive_redeem_single(SelfParaChainId::get().into(), account_id, source_pool_id, redeem_amount, burn_amount)?;
+		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(SelfParaChainId::get().into(), account_id, remote_pool_id, chain_id, mint_amount)?;
 		Ok(().into())
 	}
 }
@@ -1996,6 +1962,7 @@ impl nutsfinance_stable_asset::Config for Runtime {
 	type APrecision = ConstU128<100>; // 2 decimals
 	type PoolAssetLimit = ConstU32<5>;
 	type SwapExactOverAmount = ConstU128<100>;
+	type ChainId = ConstU32<3000u32>;
 	type WeightInfo = weights::nutsfinance_stable_asset::WeightInfo<Runtime>;
 	type ListingOrigin = EnsureRootOrAllTechnicalCommittee;
 	type EnsurePoolAssetId = EnsurePoolAssetId;
