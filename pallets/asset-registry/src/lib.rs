@@ -35,7 +35,7 @@ use frame_support::{
 use frame_system::pallet_prelude::*;
 use primitives::{AssetIdMapping, CurrencyId, ForeignAssetId};
 use scale_info::TypeInfo;
-use sp_runtime::{traits::One, ArithmeticError, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::{One, Convert}, ArithmeticError, FixedPointNumber, FixedU128};
 use sp_std::{boxed::Box, vec::Vec};
 // NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
 // MultiLocation in the future.
@@ -300,6 +300,81 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		Pallet::<T>::location_to_currency_ids(multi_location)
+	}
+}
+
+
+pub struct TransactionFeeNativeTrader<T: Get<CurrencyId>, C, K: Get<(AssetId, u128)>, R: TakeRevenue> {
+	weight: Weight,
+	amount: u128,
+	asset_location: Option<MultiLocation>,
+	asset_per_second: u128,
+	_marker: PhantomData<(T, C, K, R)>,
+}
+
+impl<T: Get<CurrencyId>, C, K: Get<(AssetId, u128)>, R: TakeRevenue> WeightTrader for TransactionFeeNativeTrader<T, C, K, R>
+	where
+		C: Convert<MultiLocation, Option<CurrencyId>>,
+{
+	fn new() -> Self {
+		Self {
+			weight: 0,
+			amount: 0,
+			asset_location: None,
+			asset_per_second: 0,
+			_marker: Default::default(),
+		}
+	}
+
+	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+		// only support first fungible assets now.
+		let asset_id = payment
+			.fungible
+			.iter()
+			.next()
+			.map_or(Err(XcmError::TooExpensive), |v| Ok(v.0))?;
+
+		if let AssetId::Concrete(ref multi_location) = asset_id.clone() {
+			if let Some(token_id) = C::convert(multi_location.clone()) {
+				if token_id == T::get() {
+					let rate: FixedU128 = FixedU128::one();
+					// calculate the amount of fungible asset.
+					let weight_ratio = FixedU128::saturating_from_rational(weight as u128, WEIGHT_PER_SECOND as u128);
+					let asset_per_second = rate.saturating_mul_int(K::get().1);
+					let amount = weight_ratio.saturating_mul_int(asset_per_second);
+					let required = MultiAsset {
+						id: asset_id.clone(),
+						fun: Fungible(amount),
+					};
+					let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
+					self.weight = self.weight.saturating_add(weight);
+					self.amount = self.amount.saturating_add(amount);
+					self.asset_location = Some(multi_location.clone());
+					self.asset_per_second = asset_per_second;
+					return Ok(unused);
+				}
+			}
+		}
+		Err(XcmError::TooExpensive)
+	}
+
+	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
+		let weight = weight.min(self.weight);
+		let weight_ratio = FixedU128::saturating_from_rational(weight as u128, WEIGHT_PER_SECOND as u128);
+		let amount = weight_ratio.saturating_mul_int(self.asset_per_second);
+		self.weight = self.weight.saturating_sub(weight);
+		self.amount = self.amount.saturating_sub(amount);
+		if amount > 0 && self.asset_location.is_some() {
+			Some(
+				(
+					self.asset_location.as_ref().expect("checked is non-empty; qed").clone(),
+					amount,
+				)
+					.into(),
+			)
+		} else {
+			None
+		}
 	}
 }
 

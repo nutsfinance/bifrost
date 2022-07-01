@@ -154,7 +154,8 @@ pub enum StableAssetCall<BalanceOf, AccountIdOf> {
 #[derive(PartialEq, Encode, Decode, RuntimeDebug)]
 pub struct Mint<BalanceOf, AccountIdOf> {
 	pub account_id: AccountIdOf,
-	pub pool_id: u32,
+	pub remote_pool_id: u32,
 	pub chain_id: u32,
+	pub local_pool_id: u32,
 	pub amount: BalanceOf,
 }

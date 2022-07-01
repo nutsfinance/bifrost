@@ -68,7 +68,7 @@ use static_assertions::const_assert;
 
 /// Constant values used within the runtime.
 pub mod constants;
-use bifrost_asset_registry::{AssetIdMaps, FixedRateOfForeignAsset};
+use bifrost_asset_registry::{AssetIdMaps, FixedRateOfForeignAsset, TransactionFeeNativeTrader};
 use bifrost_flexible_fee::{
 	fee_dealer::{FeeDealer, FixedCurrencyFeeRate},
 	misc_fees::{ExtraFeeMatcher, MiscFeeHandler, NameGetter},
@@ -84,9 +84,9 @@ use constants::currency::*;
 use cumulus_primitives_core::ParaId as CumulusParaId;
 use frame_support::{
 	sp_runtime::traits::Convert,
-	traits::{EnsureOneOf, Get, LockIdentifier},
+	traits::{EnsureOneOf, Get, LockIdentifier, SortedMembers},
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 pub use node_primitives::{
 	traits::{CheckSubAccount, VtokenMintingOperator},
@@ -1210,6 +1210,7 @@ pub type Trader = (
 	FixedRateOfFungible<RmrkNewPerSecond, ToTreasury>,
 	FixedRateOfFungible<MovrPerSecond, ToTreasury>,
 	FixedRateOfForeignAsset<Runtime, ForeignAssetUnitsPerSecond, ToTreasury>,
+	TransactionFeeNativeTrader<NativeCurrencyId, BifrostCurrencyIdConvert<SelfParaChainId>, BncPerSecond, ToTreasury>
 );
 
 pub struct XcmConfig;
@@ -1685,6 +1686,8 @@ parameter_types! {
 	pub UmpTransactFee: Balance = prod_or_test!(milli(RelayCurrencyId::get()),milli(RelayCurrencyId::get()) * 100);
 	pub StatemineTransferFee: Balance = milli(RelayCurrencyId::get()) * 4;
 	pub StatemineTransferWeight:XcmBaseWeight = (RelayXcmBaseWeight::get() * 4).into();
+	pub StableAssetMintWeight:XcmBaseWeight = RelayXcmBaseWeight::get().into();
+	pub StableAssetMintFee: Balance = prod_or_test!(milli(RelayCurrencyId::get()),milli(RelayCurrencyId::get()) * 100);
 }
 
 impl xcm_interface::Config for Runtime {
@@ -1700,6 +1703,8 @@ impl xcm_interface::Config for Runtime {
 	type StatemineTransferFee = StatemineTransferFee;
 	type ContributionWeight = ContributionWeight;
 	type ContributionFee = UmpTransactFee;
+	type StableAssetMintWeight = StableAssetMintWeight;
+	type StableAssetMintFee = StableAssetMintFee;
 }
 
 parameter_types! {
@@ -1943,12 +1948,25 @@ impl nutsfinance_stable_asset::traits::XcmInterface for StableAssetXcmInterface 
 		account_id: Self::AccountId,
 		remote_pool_id: u32,
 		chain_id: u32,
+		local_pool_id: u32,
 		mint_amount: Self::Balance,
 	) -> DispatchResult {
-		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(SelfParaChainId::get().into(), account_id, remote_pool_id, chain_id, mint_amount)?;
+		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(SelfParaChainId::get().into(), account_id, remote_pool_id, chain_id, local_pool_id, mint_amount)?;
 		Ok(().into())
 	}
 }
+
+pub struct XcmAccounts;
+impl SortedMembers<AccountId> for XcmAccounts {
+	fn sorted_members() -> Vec<AccountId> {
+		vec!()
+	}
+}
+
+pub type EnsureRootOrXcm = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	EnsureSignedBy<XcmAccounts, AccountId>,
+>;
 
 impl nutsfinance_stable_asset::Config for Runtime {
 	type Event = Event;
@@ -1965,6 +1983,7 @@ impl nutsfinance_stable_asset::Config for Runtime {
 	type ChainId = ConstU32<3000u32>;
 	type WeightInfo = weights::nutsfinance_stable_asset::WeightInfo<Runtime>;
 	type ListingOrigin = EnsureRootOrAllTechnicalCommittee;
+	type XcmOrigin = EnsureRootOrAllTechnicalCommittee;
 	type EnsurePoolAssetId = EnsurePoolAssetId;
 	type XcmInterface = StableAssetXcmInterface;
 }

@@ -121,6 +121,12 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type ContributionWeight: Get<Weight>;
+
+		#[pallet::constant]
+		type StableAssetMintWeight: Get<Weight>;
+
+		#[pallet::constant]
+		type StableAssetMintFee: Get<BalanceOf<Self>>;
 	}
 
 	#[pallet::error]
@@ -304,11 +310,11 @@ pub mod pallet {
 			Ok(msg_id)
 		}
 
-		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, chain_id: u32, mint_amount: BalanceOf<T>) -> Result<MessageId, DispatchError> {
-			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, chain_id, mint_amount);
+		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, chain_id: u32, local_pool_id: u32, mint_amount: BalanceOf<T>) -> Result<MessageId, DispatchError> {
+			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, chain_id, local_pool_id, mint_amount);
 			let (dest_weight, xcm_fee) =
 				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
-					.unwrap_or((T::ContributionWeight::get(), T::ContributionFee::get()));
+					.unwrap_or((T::StableAssetMintWeight::get(), T::StableAssetMintFee::get()));
 			let nonce = Self::next_nonce_index(index)?;
 			let (msg_id, msg) =
 				Self::build_xcmp_transact(send_mint_call, dest_weight, xcm_fee, nonce)?;
@@ -373,16 +379,21 @@ pub mod pallet {
 				T::AccountIdToMultiLocation::convert(sovereign_account);
 			let fee_amount =
 				TryInto::<u128>::try_into(fee).map_err(|_| Error::<T>::FeeConvertFailed)?;
+			let key: Vec<u8> = [0, 128].to_vec();
 			let asset: MultiAsset = MultiAsset {
-				id: Concrete(MultiLocation::here()),
+				id: Concrete(MultiLocation::new(1, Junctions::X2(Parachain(parachains::karura::ID), GeneralKey(key)))),
 				fun: Fungibility::from(fee_amount),
 			};
 			let message = Xcm(vec![
+				WithdrawAsset(asset.clone().into()),
+				BuyExecution { fees: asset, weight_limit: Unlimited },
 				Transact {
 					origin_type: OriginKind::SovereignAccount,
-					require_weight_at_most: 8_500_694_000u64,
+					require_weight_at_most: weight + nonce as u64,
 					call,
 				},
+				RefundSurplus,
+				DepositAsset { assets: All.into(), max_assets: 1, beneficiary: sovereign_location },
 			]);
 			let data = VersionedXcm::<()>::from(message.clone()).encode();
 			let id = Self::transact_id(&data[..]);
@@ -408,12 +419,13 @@ pub mod pallet {
 			account_id: AccountIdOf<T>,
 			remote_pool_id: u32,
 			chain_id: u32,
+			local_pool_id: u32,
 			mint_amount: BalanceOf<T>,
 		) -> DoubleEncoded<()> {
 			use_relay!({
 				let mint_call =
 				RelaychainCall::StableAsset::<BalanceOf<T>, AccountIdOf<T>, BlockNumberFor<T>>(
-					StableAssetCall::Mint(Mint {account_id, pool_id: remote_pool_id, chain_id, amount: mint_amount})
+					StableAssetCall::Mint(Mint {account_id, remote_pool_id, chain_id, local_pool_id, amount: mint_amount})
 				)
 					.encode()
 					.into();

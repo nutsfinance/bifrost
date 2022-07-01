@@ -227,7 +227,7 @@ impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>, crate::BalanceO
 		}
 	}
 
-	fn stable_asset_send_mint(_index: ParaId, _account_id: crate::AccountIdOf<Test>, _pool_id: u32, _chain_id: u32, _mint_amount: Balance) -> Result<MessageId, DispatchError> {
+	fn stable_asset_send_mint(_index: ParaId, _account_id: crate::AccountIdOf<Test>, _pool_id: u32, _chain_id: u32, _local_pool_id: u32, _mint_amount: Balance) -> Result<MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
 		match result {
