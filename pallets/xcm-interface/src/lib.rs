@@ -379,7 +379,7 @@ pub mod pallet {
 				T::AccountIdToMultiLocation::convert(sovereign_account);
 			let fee_amount =
 				TryInto::<u128>::try_into(fee).map_err(|_| Error::<T>::FeeConvertFailed)?;
-			let key: Vec<u8> = [0, 128].to_vec();
+			let key: Vec<u8> = parachains::karura::KAR_KEY.to_vec();
 			let asset: MultiAsset = MultiAsset {
 				id: Concrete(MultiLocation::new(1, Junctions::X2(Parachain(parachains::karura::ID), GeneralKey(key)))),
 				fun: Fungibility::from(fee_amount),
