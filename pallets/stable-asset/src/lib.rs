@@ -80,6 +80,7 @@ pub trait WeightInfo {
 	fn modify_a() -> Weight;
 	fn mint(u: u32) -> Weight;
 	fn mint_xcm(u: u32) -> Weight;
+	fn send_mint_xcm() -> Weight;
 	fn swap(u: u32) -> Weight;
 	fn redeem_proportion(u: u32) -> Weight;
 	fn redeem_single(u: u32) -> Weight;
@@ -303,6 +304,13 @@ pub mod traits {
 			min_mint_amount: Self::Balance,
 			remote_pool_id: StableAssetXcmPoolId,
 		) -> DispatchResult;
+
+		fn send_mint_xcm(
+			who: &Self::AccountId,
+			local_pool_id: StableAssetPoolId,
+			mint_amount: Self::Balance,
+			remote_pool_id: StableAssetXcmPoolId,
+		) -> DispatchResult;
 	}
 
 	pub trait XcmInterface {
@@ -344,24 +352,24 @@ pub mod pallet {
 		type AssetId: Parameter + Ord + Copy;
 		type Balance: Parameter + Codec + Copy + Ord + From<Self::AtLeast64BitUnsigned> + Zero;
 		type Assets: fungibles::Inspect<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>
-		+ fungibles::Mutate<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>
-		+ fungibles::Transfer<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>;
+			+ fungibles::Mutate<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>
+			+ fungibles::Transfer<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>;
 		type AtLeast64BitUnsigned: Parameter
-		+ CheckedAdd
-		+ CheckedSub
-		+ CheckedMul
-		+ CheckedDiv
-		+ Copy
-		+ Eq
-		+ Ord
-		+ From<Self::Balance>
-		+ From<u8>
-		+ From<u128>
-		+ From<Self::BlockNumber>
-		+ TryFrom<usize>
-		+ Zero
-		+ One
-		+ FixedPointOperand;
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ CheckedDiv
+			+ Copy
+			+ Eq
+			+ Ord
+			+ From<Self::Balance>
+			+ From<u8>
+			+ From<u128>
+			+ From<Self::BlockNumber>
+			+ TryFrom<usize>
+			+ Zero
+			+ One
+			+ FixedPointOperand;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		#[pallet::constant]
@@ -678,7 +686,7 @@ pub mod pallet {
 			<Self as StableAsset>::modify_a(pool_id, a, future_a_block)
 		}
 
-		#[pallet::weight(T::WeightInfo::mint(amounts.len() as u32))]
+		#[pallet::weight(T::WeightInfo::mint_xcm(amounts.len() as u32))]
 		#[transactional]
 		pub fn mint_xcm(
 			origin: OriginFor<T>,
@@ -739,6 +747,18 @@ pub mod pallet {
 			let pool_info = Self::pool(pool_id).ok_or(Error::<T>::PoolNotFound)?;
 			T::Assets::transfer(pool_info.pool_asset, &pool_info.account_id, &account_id, amount, false)?;
 			<Self as StableAsset>::redeem_single(&account_id, pool_id, amount, i, min_redeem_amount, asset_length)
+		}
+
+		#[pallet::weight(T::WeightInfo::send_mint_xcm())]
+		#[transactional]
+		pub fn send_mint_xcm(
+			origin: OriginFor<T>,
+			pool_id: StableAssetPoolId,
+			mint_amount: T::Balance,
+			remote_pool_id: StableAssetXcmPoolId,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			<Self as StableAsset>::send_mint_xcm(&who, pool_id, mint_amount, remote_pool_id)
 		}
 	}
 }
@@ -896,7 +916,7 @@ impl<T: Config> Pallet<T> {
 			pool_info.future_a,
 			pool_info.future_a_block,
 		)
-			.ok_or(Error::<T>::Math)?;
+		.ok_or(Error::<T>::Math)?;
 		let old_d: T::AtLeast64BitUnsigned = pool_info.total_supply.into();
 		let zero: T::AtLeast64BitUnsigned = Zero::zero();
 		let fee_denominator: T::AtLeast64BitUnsigned = T::FeePrecision::get();
@@ -972,7 +992,7 @@ impl<T: Config> Pallet<T> {
 			pool_info.future_a,
 			pool_info.future_a_block,
 		)
-			.ok_or(Error::<T>::Math)?;
+		.ok_or(Error::<T>::Math)?;
 		let d: T::AtLeast64BitUnsigned = pool_info.total_supply.into();
 		let fee_denominator: T::AtLeast64BitUnsigned = T::FeePrecision::get();
 		let mut balances: Vec<T::AtLeast64BitUnsigned> =
@@ -1137,7 +1157,7 @@ impl<T: Config> Pallet<T> {
 			pool_info.future_a,
 			pool_info.future_a_block,
 		)
-			.ok_or(Error::<T>::Math)?;
+		.ok_or(Error::<T>::Math)?;
 		let d: T::AtLeast64BitUnsigned = pool_info.total_supply.into();
 		let fee_denominator: T::AtLeast64BitUnsigned = T::FeePrecision::get();
 		let mut fee_amount: T::AtLeast64BitUnsigned = zero;
@@ -1190,7 +1210,7 @@ impl<T: Config> Pallet<T> {
 			pool_info.future_a,
 			pool_info.future_a_block,
 		)
-			.ok_or(Error::<T>::Math)?;
+		.ok_or(Error::<T>::Math)?;
 		let old_d: T::AtLeast64BitUnsigned = pool_info.total_supply.into();
 		let zero: T::AtLeast64BitUnsigned = Zero::zero();
 		for i in 0..balances.len() {
@@ -1243,7 +1263,7 @@ impl<T: Config> Pallet<T> {
 			pool_info.future_a,
 			pool_info.future_a_block,
 		)
-			.ok_or(Error::<T>::Math)?;
+		.ok_or(Error::<T>::Math)?;
 		let old_d: T::AtLeast64BitUnsigned = pool_info.total_supply.into();
 		for (i, balance) in balances.iter_mut().enumerate() {
 			let balance_of: T::AtLeast64BitUnsigned =
@@ -1283,7 +1303,7 @@ impl<T: Config> Pallet<T> {
 			pool_info.future_a,
 			pool_info.future_a_block,
 		)
-			.ok_or(Error::<T>::Math)?;
+		.ok_or(Error::<T>::Math)?;
 		let balances: Vec<T::AtLeast64BitUnsigned> = Self::convert_vec_balance_to_number(pool_info.balances.clone());
 		let new_d: T::AtLeast64BitUnsigned = Self::get_d(&balances, a).ok_or(Error::<T>::Math)?;
 		let mut cloned_stable_asset_info = pool_info.clone();
@@ -1397,7 +1417,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 				pool_info.future_a,
 				pool_info.future_a_block,
 			)
-				.ok_or(Error::<T>::Math)?;
+			.ok_or(Error::<T>::Math)?;
 			let yield_amount: T::AtLeast64BitUnsigned = new_d - old_d;
 			T::Assets::mint_into(pool_info.pool_asset, &pool_info.yield_recipient, yield_amount.into())?;
 			pool_info.total_supply = new_d.into();
@@ -1449,7 +1469,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 				pool_info.future_a,
 				pool_info.future_a_block,
 			)
-				.ok_or(Error::<T>::Math)?;
+			.ok_or(Error::<T>::Math)?;
 			Self::deposit_event(Event::FeeCollected {
 				pool_id,
 				a,
@@ -1569,7 +1589,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 					pool_info.future_a,
 					pool_info.future_a_block,
 				)
-					.ok_or(Error::<T>::Math)?;
+				.ok_or(Error::<T>::Math)?;
 				ensure!(mint_amount >= min_mint_amount, Error::<T>::MintUnderMin);
 				for (i, amount) in amounts.iter().enumerate() {
 					if *amount == Zero::zero() {
@@ -1654,7 +1674,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 					pool_info.future_a,
 					pool_info.future_a_block,
 				)
-					.ok_or(Error::<T>::Math)?;
+				.ok_or(Error::<T>::Math)?;
 				Self::deposit_event(Event::TokenSwapped {
 					swapper: who.clone(),
 					pool_id,
@@ -1720,7 +1740,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 				pool_info.future_a,
 				pool_info.future_a_block,
 			)
-				.ok_or(Error::<T>::Math)?;
+			.ok_or(Error::<T>::Math)?;
 			Self::deposit_event(Event::RedeemedProportion {
 				redeemer: who.clone(),
 				pool_id,
@@ -1794,7 +1814,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 				pool_info.future_a,
 				pool_info.future_a_block,
 			)
-				.ok_or(Error::<T>::Math)?;
+			.ok_or(Error::<T>::Math)?;
 			Self::deposit_event(Event::RedeemedSingle {
 				redeemer: who.clone(),
 				pool_id,
@@ -1856,7 +1876,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 				pool_info.future_a,
 				pool_info.future_a_block,
 			)
-				.ok_or(Error::<T>::Math)?;
+			.ok_or(Error::<T>::Math)?;
 			Self::deposit_event(Event::RedeemedMulti {
 				redeemer: who.clone(),
 				pool_id,
@@ -1895,7 +1915,7 @@ impl<T: Config> StableAsset for Pallet<T> {
 				pool_info.future_a,
 				pool_info.future_a_block,
 			)
-				.ok_or(Error::<T>::Math)?;
+			.ok_or(Error::<T>::Math)?;
 			pool_info.a = initial_a;
 			pool_info.a_block = current_block;
 			pool_info.future_a = a;
@@ -2031,6 +2051,24 @@ impl<T: Config> StableAsset for Pallet<T> {
 			T::ChainId::get(),
 			local_pool_id,
 			mint_result,
+		)?;
+		Ok(())
+	}
+
+	fn send_mint_xcm(
+		who: &Self::AccountId,
+		local_pool_id: StableAssetPoolId,
+		mint_amount: Self::Balance,
+		remote_pool_id: StableAssetXcmPoolId,
+	) -> DispatchResult {
+		let pool_info = Self::pool(local_pool_id).ok_or(Error::<T>::PoolNotFound)?;
+		T::Assets::transfer(pool_info.pool_asset, who, &pool_info.account_id, mint_amount, false)?;
+		T::XcmInterface::send_mint_call_to_xcm(
+			who.clone(),
+			remote_pool_id,
+			T::ChainId::get(),
+			local_pool_id,
+			mint_amount,
 		)?;
 		Ok(())
 	}
