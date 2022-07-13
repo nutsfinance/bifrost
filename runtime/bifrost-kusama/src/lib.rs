@@ -1985,7 +1985,7 @@ impl nutsfinance_stable_asset::Config for Runtime {
 	type ChainId = ConstU32<2001u32>;
 	type WeightInfo = weights::nutsfinance_stable_asset::WeightInfo<Runtime>;
 	type ListingOrigin = EnsureRootOrAllTechnicalCommittee;
-	type XcmOrigin = EnsureRootOrAllTechnicalCommittee;
+	type XcmOrigin = EnsureRootOrXcm;
 	type EnsurePoolAssetId = EnsurePoolAssetId;
 	type XcmInterface = StableAssetXcmInterface;
 }
