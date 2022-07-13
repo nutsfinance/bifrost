@@ -44,7 +44,7 @@ pub mod rococo {
 	pub enum RelaychainCall<BalanceOf, AccountIdOf, BlockNumberOf> {
 		#[codec(index = 28)]
 		Crowdloan(ContributeCall<BalanceOf, AccountIdOf>),
-		#[codec(index = 200)]
+		#[codec(index = 201)]
 		StableAsset(StableAssetCall<BalanceOf, AccountIdOf>),
 		#[codec(index = 91)]
 		Proxy(ProxyCall<AccountIdOf, BlockNumberOf>),
@@ -59,7 +59,7 @@ pub mod kusama {
 	pub enum RelaychainCall<BalanceOf, AccountIdOf, BlockNumberOf> {
 		#[codec(index = 73)]
 		Crowdloan(ContributeCall<BalanceOf, AccountIdOf>),
-		#[codec(index = 200)]
+		#[codec(index = 201)]
 		StableAsset(StableAssetCall<BalanceOf, AccountIdOf>),
 		#[codec(index = 30)]
 		Proxy(ProxyCall<AccountIdOf, BlockNumberOf>),
@@ -147,7 +147,7 @@ pub struct RemoveProxy<AccountIdOf, BlockNumberOf> {
 
 #[derive(Encode, Decode, RuntimeDebug)]
 pub enum StableAssetCall<BalanceOf, AccountIdOf> {
-	#[codec(index = 3)]
+	#[codec(index = 2)]
 	Mint(Mint<BalanceOf, AccountIdOf>),
 }
 
