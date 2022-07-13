@@ -1980,7 +1980,7 @@ impl nutsfinance_stable_asset::Config for Runtime {
 	type APrecision = ConstU128<100>; // 2 decimals
 	type PoolAssetLimit = ConstU32<5>;
 	type SwapExactOverAmount = ConstU128<100>;
-	type ChainId = ConstU32<3000u32>;
+	type ChainId = ConstU32<2001u32>;
 	type WeightInfo = weights::nutsfinance_stable_asset::WeightInfo<Runtime>;
 	type ListingOrigin = EnsureRootOrAllTechnicalCommittee;
 	type XcmOrigin = EnsureRootOrAllTechnicalCommittee;
