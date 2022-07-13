@@ -1959,7 +1959,9 @@ impl nutsfinance_stable_asset::traits::XcmInterface for StableAssetXcmInterface 
 pub struct XcmAccounts;
 impl SortedMembers<AccountId> for XcmAccounts {
 	fn sorted_members() -> Vec<AccountId> {
-		vec!()
+		vec![AccountId::from([
+			115, 105, 98, 108, 208, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		])] //5Eg2fntJ27qsari4FGrGhrMqKFDRnkNSR6UshkZYBGXmSuC8
 	}
 }
 
