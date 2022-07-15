@@ -116,5 +116,12 @@ pub mod parachains {
 
 pub trait XcmHelper<AccountId, Balance, StableAssetBalance> {
 	fn contribute(index: ChainId, value: Balance) -> Result<MessageId, DispatchError>;
-	fn stable_asset_send_mint(index: ChainId, account_id: AccountId, remote_pool_id: u32, chain_id: u32, local_pool_id: u32, mint_amount: Balance) -> Result<MessageId, DispatchError>;
+	fn stable_asset_send_mint(
+		index: ChainId,
+		account_id: AccountId,
+		remote_pool_id: u32,
+		chain_id: u32,
+		local_pool_id: u32,
+		mint_amount: Balance,
+	) -> Result<MessageId, DispatchError>;
 }

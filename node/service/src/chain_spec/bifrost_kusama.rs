@@ -25,8 +25,8 @@ use bifrost_kusama_runtime::{
 	AccountId, Balance, BalancesConfig, BlockNumber, CouncilConfig, CouncilMembershipConfig,
 	DefaultBlocksPerRound, DemocracyConfig, GenesisConfig, IndicesConfig, InflationInfo,
 	ParachainInfoConfig, ParachainStakingConfig, PolkadotXcmConfig, Range, SS58Prefix, SalpConfig,
-	SalpLiteConfig, SessionConfig, SystemConfig, TechnicalCommitteeConfig,
-	TechnicalMembershipConfig, TokensConfig, VestingConfig, WASM_BINARY, SudoConfig
+	SalpLiteConfig, SessionConfig, SudoConfig, SystemConfig, TechnicalCommitteeConfig,
+	TechnicalMembershipConfig, TokensConfig, VestingConfig, WASM_BINARY,
 };
 use bifrost_runtime_common::{dollar, AuraId};
 use cumulus_primitives_core::ParaId;
@@ -127,7 +127,7 @@ pub fn bifrost_genesis(
 	technical_committee_membership: Vec<AccountId>,
 	salp_multisig_key: AccountId,
 	salp_lite_multisig_key_salp: AccountId,
-	root_key: AccountId
+	root_key: AccountId,
 ) -> GenesisConfig {
 	GenesisConfig {
 		system: SystemConfig {

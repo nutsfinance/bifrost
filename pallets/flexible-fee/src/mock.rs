@@ -42,9 +42,8 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlakeTwo256, IdentityLookup, UniqueSaturatedInto},
 	AccountId32, SaturatedConversion,
 };
-use xcm_interface::traits::XcmHelper;
+use xcm_interface::{traits::XcmHelper, ChainId};
 use zenlink_protocol::{AssetId as ZenlinkAssetId, LocalAssetHandler, ZenlinkMultiAssets};
-use xcm_interface::ChainId;
 
 use super::*;
 use crate as flexible_fee;
@@ -385,7 +384,13 @@ pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 // Mock XcmExecutor
 pub struct MockXcmExecutor;
 
-impl XcmHelper<AccountIdOf<Test>, crate::pallet::PalletBalanceOf<Test>, crate::pallet::PalletBalanceOf<Test>> for MockXcmExecutor {
+impl
+	XcmHelper<
+		AccountIdOf<Test>,
+		crate::pallet::PalletBalanceOf<Test>,
+		crate::pallet::PalletBalanceOf<Test>,
+	> for MockXcmExecutor
+{
 	fn contribute(_index: ParaId, _value: Balance) -> Result<MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
@@ -395,7 +400,14 @@ impl XcmHelper<AccountIdOf<Test>, crate::pallet::PalletBalanceOf<Test>, crate::p
 		}
 	}
 
-	fn stable_asset_send_mint(_index: ParaId, _account_id: AccountIdOf<Test>, _pool_id: u32, _chain_id: u32, _local_pool_id: u32, _mint_amount: Balance) -> Result<MessageId, DispatchError> {
+	fn stable_asset_send_mint(
+		_index: ParaId,
+		_account_id: AccountIdOf<Test>,
+		_pool_id: u32,
+		_chain_id: u32,
+		_local_pool_id: u32,
+		_mint_amount: Balance,
+	) -> Result<MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
 		match result {

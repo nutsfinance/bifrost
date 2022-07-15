@@ -33,7 +33,8 @@ use bifrost_slp::QueryResponseManager;
 pub use frame_support::{
 	construct_runtime, match_types, parameter_types,
 	traits::{
-		ConstU32, ConstU128, Contains, EqualPrivilegeOnly, Everything, InstanceFilter, IsInVec, Nothing, Randomness,
+		ConstU128, ConstU32, Contains, EqualPrivilegeOnly, Everything, InstanceFilter, IsInVec,
+		Nothing, Randomness,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -1210,7 +1211,12 @@ pub type Trader = (
 	FixedRateOfFungible<RmrkNewPerSecond, ToTreasury>,
 	FixedRateOfFungible<MovrPerSecond, ToTreasury>,
 	FixedRateOfForeignAsset<Runtime, ForeignAssetUnitsPerSecond, ToTreasury>,
-	TransactionFeeNativeTrader<NativeCurrencyId, BifrostCurrencyIdConvert<SelfParaChainId>, BncPerSecond, ToTreasury>
+	TransactionFeeNativeTrader<
+		NativeCurrencyId,
+		BifrostCurrencyIdConvert<SelfParaChainId>,
+		BncPerSecond,
+		ToTreasury,
+	>,
 );
 
 pub struct XcmConfig;
@@ -1951,7 +1957,14 @@ impl nutsfinance_stable_asset::traits::XcmInterface for StableAssetXcmInterface 
 		local_pool_id: u32,
 		mint_amount: Self::Balance,
 	) -> DispatchResult {
-		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(SelfParaChainId::get().into(), account_id, remote_pool_id, chain_id, local_pool_id, mint_amount)?;
+		xcm_interface::Pallet::<Runtime>::stable_asset_send_mint(
+			SelfParaChainId::get().into(),
+			account_id,
+			remote_pool_id,
+			chain_id,
+			local_pool_id,
+			mint_amount,
+		)?;
 		Ok(().into())
 	}
 }
@@ -1960,15 +1973,14 @@ pub struct XcmAccounts;
 impl SortedMembers<AccountId> for XcmAccounts {
 	fn sorted_members() -> Vec<AccountId> {
 		vec![AccountId::from([
-			115, 105, 98, 108, 208, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			115, 105, 98, 108, 208, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
 		])] //5Eg2fntJ27qsari4FGrGhrMqKFDRnkNSR6UshkZYBGXmSuC8
 	}
 }
 
-pub type EnsureRootOrXcm = EnsureOneOf<
-	EnsureRoot<AccountId>,
-	EnsureSignedBy<XcmAccounts, AccountId>,
->;
+pub type EnsureRootOrXcm =
+	EnsureOneOf<EnsureRoot<AccountId>, EnsureSignedBy<XcmAccounts, AccountId>>;
 
 impl nutsfinance_stable_asset::Config for Runtime {
 	type Event = Event;

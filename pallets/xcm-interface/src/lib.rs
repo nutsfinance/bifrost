@@ -22,10 +22,10 @@
 pub mod calls;
 pub mod traits;
 pub use calls::*;
+pub use nutsfinance_stable_asset;
 use orml_traits::MultiCurrency;
 pub use pallet::*;
 pub use traits::{ChainId, MessageId, Nonce};
-pub use nutsfinance_stable_asset;
 
 macro_rules! use_relay {
     ({ $( $code:tt )* }) => {
@@ -83,7 +83,9 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_xcm::Config + nutsfinance_stable_asset::Config {
+	pub trait Config:
+		frame_system::Config + pallet_xcm::Config + nutsfinance_stable_asset::Config
+	{
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type MultiCurrency: TransferAll<AccountIdOf<Self>>
@@ -310,8 +312,21 @@ pub mod pallet {
 			Ok(msg_id)
 		}
 
-		fn stable_asset_send_mint(index: ChainId, account_id: AccountIdOf<T>, pool_id: u32, chain_id: u32, local_pool_id: u32, mint_amount: BalanceOf<T>) -> Result<MessageId, DispatchError> {
-			let send_mint_call = Self::build_stable_asset_send_mint(account_id, pool_id, chain_id, local_pool_id, mint_amount);
+		fn stable_asset_send_mint(
+			index: ChainId,
+			account_id: AccountIdOf<T>,
+			pool_id: u32,
+			chain_id: u32,
+			local_pool_id: u32,
+			mint_amount: BalanceOf<T>,
+		) -> Result<MessageId, DispatchError> {
+			let send_mint_call = Self::build_stable_asset_send_mint(
+				account_id,
+				pool_id,
+				chain_id,
+				local_pool_id,
+				mint_amount,
+			);
 			let (dest_weight, xcm_fee) =
 				Self::xcm_dest_weight_and_fee(XcmInterfaceOperation::StableAssetCall)
 					.unwrap_or((T::StableAssetMintWeight::get(), T::StableAssetMintFee::get()));
@@ -319,7 +334,11 @@ pub mod pallet {
 			let (msg_id, msg) =
 				Self::build_xcmp_transact(send_mint_call, dest_weight, xcm_fee, nonce)?;
 
-			let result = pallet_xcm::Pallet::<T>::send_xcm(Here, ParentThen(Junctions::X1(Junction::Parachain(parachains::karura::ID))), msg);
+			let result = pallet_xcm::Pallet::<T>::send_xcm(
+				Here,
+				ParentThen(Junctions::X1(Junction::Parachain(parachains::karura::ID))),
+				msg,
+			);
 			ensure!(result.is_ok(), Error::<T>::XcmSendFailed);
 			Ok(msg_id)
 		}
@@ -381,7 +400,10 @@ pub mod pallet {
 				TryInto::<u128>::try_into(fee).map_err(|_| Error::<T>::FeeConvertFailed)?;
 			let key: Vec<u8> = parachains::karura::KAR_KEY.to_vec();
 			let asset: MultiAsset = MultiAsset {
-				id: Concrete(MultiLocation::new(1, Junctions::X2(Parachain(parachains::karura::ID), GeneralKey(key)))),
+				id: Concrete(MultiLocation::new(
+					1,
+					Junctions::X2(Parachain(parachains::karura::ID), GeneralKey(key)),
+				)),
 				fun: Fungibility::from(fee_amount),
 			};
 			let message = Xcm(vec![
@@ -424,9 +446,15 @@ pub mod pallet {
 		) -> DoubleEncoded<()> {
 			use_relay!({
 				let mint_call =
-				RelaychainCall::StableAsset::<BalanceOf<T>, AccountIdOf<T>, BlockNumberFor<T>>(
-					StableAssetCall::Mint(Mint {account_id, remote_pool_id, chain_id, local_pool_id, amount: mint_amount})
-				)
+					RelaychainCall::StableAsset::<BalanceOf<T>, AccountIdOf<T>, BlockNumberFor<T>>(
+						StableAssetCall::Mint(Mint {
+							account_id,
+							remote_pool_id,
+							chain_id,
+							local_pool_id,
+							amount: mint_amount,
+						}),
+					)
 					.encode()
 					.into();
 				mint_call

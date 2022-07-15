@@ -37,8 +37,7 @@ use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use xcm_interface::ChainId;
-use xcm_interface::traits::XcmHelper;
+use xcm_interface::{traits::XcmHelper, ChainId};
 
 use crate as salp;
 use crate::{AccountIdOf, BalanceOf, WeightInfo};
@@ -217,7 +216,9 @@ pub(crate) static mut MOCK_XCM_RESULT: (bool, bool) = (true, true);
 // Mock XcmExecutor
 pub struct MockXcmExecutor;
 
-impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>, crate::BalanceOf<Test>> for MockXcmExecutor {
+impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>, crate::BalanceOf<Test>>
+	for MockXcmExecutor
+{
 	fn contribute(_index: ParaId, _value: Balance) -> Result<MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
@@ -227,7 +228,14 @@ impl XcmHelper<crate::AccountIdOf<Test>, crate::BalanceOf<Test>, crate::BalanceO
 		}
 	}
 
-	fn stable_asset_send_mint(_index: ParaId, _account_id: crate::AccountIdOf<Test>, _pool_id: u32, _chain_id: u32, _local_pool_id: u32, _mint_amount: Balance) -> Result<MessageId, DispatchError> {
+	fn stable_asset_send_mint(
+		_index: ParaId,
+		_account_id: crate::AccountIdOf<Test>,
+		_pool_id: u32,
+		_chain_id: u32,
+		_local_pool_id: u32,
+		_mint_amount: Balance,
+	) -> Result<MessageId, DispatchError> {
 		let result = unsafe { MOCK_XCM_RESULT.0 };
 
 		match result {
