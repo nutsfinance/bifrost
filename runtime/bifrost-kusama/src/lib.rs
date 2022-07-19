@@ -1364,7 +1364,7 @@ parameter_type_with_key! {
 			&CurrencyId::VSBond(TokenSymbol::KSM, ..) => 10 * millicent(RelayCurrencyId::get()),
 			&CurrencyId::VSBond(TokenSymbol::DOT, ..) => 1 * cent(PolkadotCurrencyId::get()),
 			&CurrencyId::LPToken(..) => 10 * millicent(NativeCurrencyId::get()),
-			&CurrencyId::StableAssetPoolToken(..) => 10 * millicent(NativeCurrencyId::get()),
+			&CurrencyId::StableAssetLocalPoolToken(..) => 10 * millicent(NativeCurrencyId::get()),
 			&CurrencyId::VToken(TokenSymbol::KSM) => 10 * millicent(RelayCurrencyId::get()),  // 0.0001 vKSM
 			&CurrencyId::Token(TokenSymbol::RMRK) => 1 * micro(CurrencyId::Token(TokenSymbol::RMRK)),
 			&CurrencyId::Token(TokenSymbol::MOVR) => 1 * micro(CurrencyId::Token(TokenSymbol::MOVR)),	// MOVR has a decimals of 10e18
@@ -1915,7 +1915,7 @@ parameter_types! {
 pub struct EnsurePoolAssetId;
 impl nutsfinance_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoolAssetId {
 	fn validate(currency_id: CurrencyId) -> bool {
-		matches!(currency_id, CurrencyId::StableAssetPoolToken(_))
+		matches!(currency_id, CurrencyId::StableAssetLocalPoolToken(_))
 	}
 }
 
