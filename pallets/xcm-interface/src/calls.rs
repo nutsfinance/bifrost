@@ -147,7 +147,7 @@ pub struct RemoveProxy<AccountIdOf, BlockNumberOf> {
 
 #[derive(Encode, Decode, RuntimeDebug)]
 pub enum StableAssetCall<BalanceOf, AccountIdOf> {
-	#[codec(index = 2)]
+	#[codec(index = 3)]
 	Mint(Mint<BalanceOf, AccountIdOf>),
 }
 
