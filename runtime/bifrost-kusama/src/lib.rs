@@ -101,7 +101,7 @@ use orml_xcm_support::{DepositToAlternative, MultiCurrencyAdapter};
 use pallet_xcm::XcmPassthrough;
 // XCM imports
 use polkadot_parachain::primitives::Sibling;
-use sp_arithmetic::Percent;
+use sp_runtime::{FixedPointNumber, Percent, FixedU128};
 use sp_runtime::traits::ConvertInto;
 use xcm::latest::prelude::*;
 use xcm_builder::{
@@ -145,7 +145,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("bifrost"),
 	impl_name: create_runtime_str!("bifrost"),
 	authoring_version: 1,
-	spec_version: 942,
+	spec_version: 950,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1909,7 +1909,7 @@ where
 }
 
 parameter_types! {
-	pub const GetLiquidCurrencyId: CurrencyId = CurrencyId::Native(TokenSymbol::KSM);
+	pub const GetVTokenCurrencyId: CurrencyId = CurrencyId::VToken(TokenSymbol::KSM);
 }
 
 pub struct EnsurePoolAssetId;
@@ -1919,30 +1919,57 @@ impl nutsfinance_stable_asset::traits::ValidateAssetId<CurrencyId> for EnsurePoo
 	}
 }
 
-pub struct ConvertBalanceHoma;
-impl orml_tokens::ConvertBalance<Balance, Balance> for ConvertBalanceHoma {
+pub struct ConvertBalanceVToken;
+impl orml_tokens::ConvertBalance<Balance, Balance> for ConvertBalanceVToken {
 	type AssetId = CurrencyId;
 
-	fn convert_balance(balance: Balance, _asset_id: CurrencyId) -> Balance {
-		balance
+	fn convert_balance(balance: Balance, asset_id: CurrencyId) -> Balance {
+		let total_issuance = Tokens::total_issuance(CurrencyId::VToken(TokenSymbol::KSM));
+		let token_pool = VtokenMinting::token_pool(CurrencyId::Token(TokenSymbol::KSM));
+		let exchange_rate: FixedU128;
+		if total_issuance == 0 || token_pool == 0 {
+			exchange_rate = FixedU128::saturating_from_rational(1u128, 1u128);
+		} else {
+			exchange_rate = FixedU128::saturating_from_rational(token_pool, total_issuance);
+		}
+		match asset_id {
+			CurrencyId::VToken(TokenSymbol::KSM) => {
+				exchange_rate.checked_mul_int(balance).unwrap_or_default()
+			}
+			_ => balance,
+		}
 	}
 
-	fn convert_balance_back(balance: Balance, _asset_id: CurrencyId) -> Balance {
-		balance
+	fn convert_balance_back(balance: Balance, asset_id: CurrencyId) -> Balance {
+		let total_issuance = Tokens::total_issuance(CurrencyId::VToken(TokenSymbol::KSM));
+		let token_pool = VtokenMinting::token_pool(CurrencyId::Token(TokenSymbol::KSM));
+		let exchange_rate: FixedU128;
+		if total_issuance == 0 || token_pool == 0 {
+			exchange_rate = FixedU128::saturating_from_rational(1u128, 1u128);
+		} else {
+			exchange_rate = FixedU128::saturating_from_rational(token_pool, total_issuance);
+		}
+		match asset_id {
+			CurrencyId::VToken(TokenSymbol::KSM) => exchange_rate
+				.reciprocal()
+				.and_then(|x| x.checked_mul_int(balance))
+				.unwrap_or_default(),
+			_ => balance,
+		}
 	}
 }
 
-pub struct IsLiquidToken;
-impl Contains<CurrencyId> for IsLiquidToken {
-	fn contains(_currency_id: &CurrencyId) -> bool {
-		false
+pub struct IsVToken;
+impl Contains<CurrencyId> for IsVToken {
+	fn contains(currency_id: &CurrencyId) -> bool {
+		matches!(currency_id, CurrencyId::VToken(TokenSymbol::KSM))
 	}
 }
 
 type RebaseTokens = orml_tokens::Combiner<
 	AccountId,
-	IsLiquidToken,
-	orml_tokens::Mapper<AccountId, Tokens, ConvertBalanceHoma, Balance, GetLiquidCurrencyId>,
+	IsVToken,
+	orml_tokens::Mapper<AccountId, Tokens, ConvertBalanceVToken, Balance, GetVTokenCurrencyId>,
 	Tokens,
 >;
 
