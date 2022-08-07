@@ -15,7 +15,7 @@
 # along with Bifrost.  If not, see <http:#www.gnu.org/licenses/>.
 
 # syntax=docker/dockerfile:1
-FROM rust-build as builder
+FROM rust:buster as builder
 
 RUN apt-get update && apt-get install time clang libclang-dev llvm -y
 RUN rustup toolchain install nightly-2022-04-07
